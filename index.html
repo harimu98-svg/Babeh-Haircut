@@ -1,1 +1,481 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Babeh Barbershop - Katalog Model Rambut</title>
+  <!-- TailwindCSS CDN + Google Fonts untuk kesan modern & elegan -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons (optional untuk tombol navigasi) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Supabase JS Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* custom styling untuk sentuhan elegan & modern */
+    body {
+      background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    }
+    /* efek transisi halus untuk gambar grid */
+    .gallery-img {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .gallery-img:active {
+      transform: scale(0.97);
+    }
+    /* fullscreen overlay style */
+    .fullscreen-overlay {
+      background-color: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(12px);
+      transition: all 0.3s ease;
+    }
+    /* scroll halus untuk kolase */
+    .gallery-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+    .gallery-scroll::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .gallery-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 10px;
+    }
+    .gallery-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    /* menonaktifkan scroll body saat fullscreen aktif */
+    body.no-scroll {
+      overflow: hidden;
+    }
+    /* tombul navigasi modern */
+    .nav-btn {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(8px);
+      transition: all 0.2s;
+    }
+    .nav-btn:active {
+      transform: scale(0.94);
+      background: rgba(15, 23, 42, 0.95);
+    }
+    /* judul utama dengan aksen */
+    .title-shadow {
+      text-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body class="antialiased">
 
+  <div id="app" class="max-w-full min-h-screen flex flex-col relative">
+    <!-- Header / Navbar sederhana dengan logo dan judul -->
+    <header class="bg-white/70 backdrop-blur-md shadow-sm sticky top-0 z-20 border-b border-gray-200/60">
+      <div class="px-5 py-4 flex items-center gap-3">
+        <!-- Logo placeholder: jika file root/logo.png tidak ada, akan fallback ke ikon rambut -->
+        <img src="root/logo.png" alt="Babeh Logo" class="w-10 h-10 object-contain rounded-full shadow-sm" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?background=0f172a&color=fff&bold=true&name=B';">
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-800 title-shadow">Katalog Model Rambut<br><span class="text-sm font-medium text-amber-700/80">Babeh Barbershop</span></h1>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content: menu utama atau tampilan kolase -->
+    <main class="flex-1 p-4 pb-20">
+      <!-- Menu Utama (3 card) akan tampil jika state menu aktif = null -->
+      <div id="menuContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mt-6">
+        <!-- Best Haircut Card -->
+        <div class="menu-card bg-white rounded-2xl shadow-xl overflow-hidden cursor-pointer transform transition hover:scale-[1.02] active:scale-95" data-category="Best Haircut">
+          <div class="h-48 bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+            <i class="fas fa-cut text-white text-6xl opacity-80"></i>
+          </div>
+          <div class="p-5">
+            <h2 class="text-2xl font-bold text-slate-800">Best Haircut</h2>
+            <p class="text-gray-500 mt-1">Koleksi model rambut favorit pelanggan</p>
+          </div>
+        </div>
+        <!-- Kids Haircut Card -->
+        <div class="menu-card bg-white rounded-2xl shadow-xl overflow-hidden cursor-pointer transform transition hover:scale-[1.02] active:scale-95" data-category="Kids Haircut">
+          <div class="h-48 bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+            <i class="fas fa-child text-white text-6xl opacity-80"></i>
+          </div>
+          <div class="p-5">
+            <h2 class="text-2xl font-bold text-slate-800">Kids Haircut</h2>
+            <p class="text-gray-500 mt-1">Gaya rambut kekinian untuk si kecil</p>
+          </div>
+        </div>
+        <!-- All Collection Card -->
+        <div class="menu-card bg-white rounded-2xl shadow-xl overflow-hidden cursor-pointer transform transition hover:scale-[1.02] active:scale-95" data-category="All Collection">
+          <div class="h-48 bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+            <i class="fas fa-layer-group text-white text-6xl opacity-80"></i>
+          </div>
+          <div class="p-5">
+            <h2 class="text-2xl font-bold text-slate-800">All Collection</h2>
+            <p class="text-gray-500 mt-1">Semua model rambut eksklusif</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gallery View (Kolase foto) akan muncul setelah pilih menu, awalnya hidden -->
+      <div id="galleryView" class="hidden">
+        <!-- Tombol kembali ke menu utama -->
+        <div class="mb-5 flex items-center justify-between">
+          <button id="backToMenuBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full shadow-md border border-gray-200 text-slate-700 font-medium active:scale-95 transition">
+            <i class="fas fa-arrow-left"></i> Main Menu
+          </button>
+          <span id="galleryCategoryTitle" class="text-lg font-semibold text-slate-700 bg-white/60 px-4 py-1.5 rounded-full shadow-sm"></span>
+        </div>
+        
+        <!-- Kolase foto: grid responsif, scrollable vertical -->
+        <div id="imageGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 auto-rows-max pb-8 gallery-scroll max-h-[70vh] overflow-y-auto pr-1">
+          <!-- dynamic images will appear here -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Fullscreen modal untuk melihat foto besar + swipe navigasi -->
+    <div id="fullscreenModal" class="fixed inset-0 z-50 hidden flex-col justify-between items-center fullscreen-overlay">
+      <div class="absolute top-5 right-5 z-50">
+        <button id="closeFullscreenBtn" class="bg-black/40 text-white p-3 rounded-full backdrop-blur-sm hover:bg-black/60 active:scale-95 transition">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+      <!-- area gambar fullscreen + swipe -->
+      <div class="flex-1 w-full flex items-center justify-center relative touch-pan-y" id="fullscreenImageContainer">
+        <img id="fullscreenImg" class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl" src="" alt="Fullscreen">
+        <!-- navigasi kiri & kanan (untuk touch/desktop) -->
+        <button id="prevImageBtn" class="absolute left-3 md:left-6 nav-btn text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg">
+          <i class="fas fa-chevron-left text-2xl"></i>
+        </button>
+        <button id="nextImageBtn" class="absolute right-3 md:right-6 nav-btn text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg">
+          <i class="fas fa-chevron-right text-2xl"></i>
+        </button>
+      </div>
+      <!-- indikator slide & caption kecil -->
+      <div class="py-5 text-white/80 text-center text-sm">
+        <span id="imageCounter">0 / 0</span> &nbsp;|&nbsp; Geser atau tekan tombol
+      </div>
+    </div>
+
+    <!-- loading indicator sederhana -->
+    <div id="loadingToast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-5 py-2 rounded-full shadow-lg z-40 text-sm font-medium hidden transition-all">
+      <i class="fas fa-spinner fa-spin mr-2"></i> Memuat koleksi...
+    </div>
+  </div>
+
+  <script>
+    // Inisialisasi Supabase
+    const SUPABASE_URL = 'https://intzwjmlypmopzauxeqt.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImludHp3am1seXBtb3B6YXV4ZXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MTc5MTIsImV4cCI6MjA3MDI5MzkxMn0.VwwVEDdHtYP5gui4epTcNfLXhPkmfFbRVb5y8mrXJiM';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Nama bucket: model_rambut
+    const BUCKET_NAME = 'model_rambut';
+    
+    // Mapping kategori ke folder path di bucket
+    const categoryMapping = {
+      'Best Haircut': 'Best Haircut',
+      'Kids Haircut': 'Kids Haircut',
+      'All Collection': 'All Collections'   // perhatikan spasi: "All Collections" dari spesifikasi
+    };
+    
+    // State aplikasi
+    let currentCategory = null;           // kategori aktif
+    let currentImages = [];               // daftar URL publik dari supabase storage
+    let currentFullscreenIndex = 0;       // indeks foto yang sedang dilihat di modal
+    
+    // DOM Elements
+    const menuContainer = document.getElementById('menuContainer');
+    const galleryView = document.getElementById('galleryView');
+    const imageGrid = document.getElementById('imageGrid');
+    const backToMenuBtn = document.getElementById('backToMenuBtn');
+    const galleryCategoryTitle = document.getElementById('galleryCategoryTitle');
+    const fullscreenModal = document.getElementById('fullscreenModal');
+    const fullscreenImg = document.getElementById('fullscreenImg');
+    const closeFullscreenBtn = document.getElementById('closeFullscreenBtn');
+    const prevImageBtn = document.getElementById('prevImageBtn');
+    const nextImageBtn = document.getElementById('nextImageBtn');
+    const imageCounter = document.getElementById('imageCounter');
+    const loadingToast = document.getElementById('loadingToast');
+    
+    // Helper: Tampilkan loading toast sementara
+    function showLoading(show) {
+      if (show) {
+        loadingToast.classList.remove('hidden');
+      } else {
+        loadingToast.classList.add('hidden');
+      }
+    }
+    
+    // Helper: Mendapatkan semua file dari folder tertentu di bucket menggunakan Supabase Storage list API
+    // Karena supabase storage list memerlukan bucket public, kita asumsikan bucket model_rambut sudah public.
+    // Fungsi ini mengambil path folder (contoh: "Best Haircut") lalu return array URL publik.
+    async function fetchImagesFromFolder(folderPath) {
+      try {
+        showLoading(true);
+        // List semua file di dalam folder
+        const { data, error } = await supabase.storage
+          .from(BUCKET_NAME)
+          .list(folderPath, {
+            limit: 100,
+            offset: 0,
+            sortBy: { column: 'name', order: 'asc' }
+          });
+        
+        if (error) {
+          console.error('Error listing folder:', error);
+          // Jika error karena bucket private atau tidak ada akses, beri notifikasi
+          if (error.message.includes('row-level security') || error.statusCode === 403) {
+            alert('Bucket tidak dapat diakses publik. Pastikan bucket "model_rambut" telah diatur public. Gunakan sample dummy.');
+            return getDummyImagesByCategory(folderPath);
+          }
+          return [];
+        }
+        
+        if (!data || data.length === 0) {
+          console.warn(`Folder ${folderPath} kosong atau tidak ada file.`);
+          return [];
+        }
+        
+        // filter hanya file (bukan folder), dan ekstensi gambar umum
+        const imageFiles = data.filter(file => {
+          const name = file.name;
+          return !name.endsWith('/') && /\.(jpg|jpeg|png|webp|gif|JPG|JPEG|PNG|WEBP)$/i.test(name);
+        });
+        
+        // buat public URL untuk setiap file
+        const imageUrls = imageFiles.map(file => {
+          const { data: publicUrlData } = supabase.storage
+            .from(BUCKET_NAME)
+            .getPublicUrl(`${folderPath}/${file.name}`);
+          return publicUrlData.publicUrl;
+        });
+        
+        return imageUrls;
+      } catch (err) {
+        console.error('fetch error:', err);
+        return getDummyImagesByCategory(folderPath);
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    // **DUMMY DATA** jika supabase bucket belum diisi, supaya demo tetap keren & sesuai fungsionalitas
+    // Kita menyediakan gambar placeholder / unsplash dengan gaya rambut agar aplikasi tetap hidup.
+    function getDummyImagesByCategory(folderPath) {
+      // mapping folder path asli ke dummy collection
+      let categoryKey = '';
+      if (folderPath.includes('Best Haircut')) categoryKey = 'best';
+      else if (folderPath.includes('Kids Haircut')) categoryKey = 'kids';
+      else if (folderPath.includes('All Collections')) categoryKey = 'all';
+      
+      const dummyBase = 'https://images.unsplash.com/';
+      const dummySets = {
+        best: [
+          'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&h=500&fit=crop',  // modern haircut
+          'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?w=500&h=500&fit=crop'
+        ],
+        kids: [
+          'https://images.unsplash.com/photo-1522771939531-1f9c5f5f6e2b?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1545554980-7b57f5b6dd22?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=500&h=500&fit=crop'
+        ],
+        all: [
+          'https://images.unsplash.com/photo-1560066984-138dadb4c235?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1522771939531-1f9c5f5f6e2b?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1545554980-7b57f5b6dd22?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=500&h=500&fit=crop',
+          'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=500&h=500&fit=crop'
+        ]
+      };
+      if (categoryKey === 'best') return dummySets.best;
+      if (categoryKey === 'kids') return dummySets.kids;
+      return dummySets.all;
+    }
+    
+    // Render kolase gambar ke dalam grid
+    function renderGallery(images) {
+      if (!imageGrid) return;
+      if (!images.length) {
+        imageGrid.innerHTML = `<div class="col-span-full text-center py-12 bg-white/50 rounded-2xl"><i class="fas fa-image text-4xl text-gray-400 mb-2"></i><p class="text-gray-500">Belum ada foto di koleksi ini.<br>Silakan tambah gambar ke bucket "${BUCKET_NAME}/${categoryMapping[currentCategory]}"</p></div>`;
+        return;
+      }
+      imageGrid.innerHTML = images.map((imgUrl, idx) => `
+        <div class="relative overflow-hidden rounded-xl shadow-md bg-white aspect-square group">
+          <img src="${imgUrl}" alt="Gambar model rambut" class="gallery-img w-full h-full object-cover rounded-xl" data-index="${idx}" data-url="${imgUrl}">
+          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></div>
+        </div>
+      `).join('');
+      
+      // tambahkan event listener untuk setiap gambar (event delegation lebih baik)
+      document.querySelectorAll('#imageGrid img').forEach(img => {
+        img.addEventListener('click', (e) => {
+          const indexAttr = img.getAttribute('data-index');
+          if (indexAttr !== null) {
+            const idx = parseInt(indexAttr, 10);
+            openFullscreen(idx);
+          }
+        });
+      });
+    }
+    
+    // Fungsi untuk memuat koleksi berdasarkan kategori (string display)
+    async function loadCategory(categoryDisplay) {
+      const folderRaw = categoryMapping[categoryDisplay];
+      if (!folderRaw) {
+        console.error('Kategori tidak dikenali', categoryDisplay);
+        return;
+      }
+      currentCategory = categoryDisplay;
+      // update title tampilan
+      galleryCategoryTitle.innerText = `${currentCategory} ✂️`;
+      
+      // ambil gambar dari supabase (atau dummy)
+      let images = await fetchImagesFromFolder(folderRaw);
+      // jika hasil dari supabase kosong, kita bisa coba dummy untuk pengalaman seamless
+      if (!images.length && (folderRaw === 'Best Haircut' || folderRaw === 'Kids Haircut' || folderRaw === 'All Collections')) {
+        images = getDummyImagesByCategory(folderRaw);
+        if(images.length) console.log(`Memuat dummy images untuk ${folderRaw}`);
+      }
+      currentImages = images;
+      renderGallery(currentImages);
+      
+      // Sembunyikan menu, tampilkan gallery view
+      menuContainer.classList.add('hidden');
+      galleryView.classList.remove('hidden');
+      // scroll ke atas
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // Kembali ke menu utama
+    function backToMainMenu() {
+      galleryView.classList.add('hidden');
+      menuContainer.classList.remove('hidden');
+      currentCategory = null;
+      currentImages = [];
+      // tutup modal jika kebetulan terbuka
+      closeFullscreen();
+    }
+    
+    // Fullscreen Logic dengan swipe & navigasi antar foto
+    function openFullscreen(index) {
+      if (!currentImages.length) return;
+      if (index < 0) index = 0;
+      if (index >= currentImages.length) index = currentImages.length - 1;
+      currentFullscreenIndex = index;
+      const imageUrl = currentImages[currentFullscreenIndex];
+      fullscreenImg.src = imageUrl;
+      updateCounterText();
+      fullscreenModal.classList.remove('hidden');
+      document.body.classList.add('no-scroll');
+    }
+    
+    function updateCounterText() {
+      imageCounter.innerText = `${currentFullscreenIndex+1} / ${currentImages.length}`;
+    }
+    
+    function nextImage() {
+      if (currentImages.length === 0) return;
+      currentFullscreenIndex = (currentFullscreenIndex + 1) % currentImages.length;
+      fullscreenImg.src = currentImages[currentFullscreenIndex];
+      updateCounterText();
+    }
+    
+    function prevImage() {
+      if (currentImages.length === 0) return;
+      currentFullscreenIndex = (currentFullscreenIndex - 1 + currentImages.length) % currentImages.length;
+      fullscreenImg.src = currentImages[currentFullscreenIndex];
+      updateCounterText();
+    }
+    
+    function closeFullscreen() {
+      fullscreenModal.classList.add('hidden');
+      document.body.classList.remove('no-scroll');
+    }
+    
+    // Event Listener untuk tombol navigasi fullscreen
+    closeFullscreenBtn.addEventListener('click', closeFullscreen);
+    prevImageBtn.addEventListener('click', prevImage);
+    nextImageBtn.addEventListener('click', nextImage);
+    
+    // Gesture swipe untuk touch (sederhana)
+    let touchStartX = 0;
+    let touchEndX = 0;
+    fullscreenModal.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+    fullscreenModal.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      if (touchEndX < touchStartX - 50) {
+        nextImage();
+      } else if (touchEndX > touchStartX + 50) {
+        prevImage();
+      }
+    });
+    
+    // Keyboard events untuk fullscreen (panah kiri/kanan, ESC)
+    document.addEventListener('keydown', (e) => {
+      if (!fullscreenModal.classList.contains('hidden')) {
+        if (e.key === 'ArrowLeft') {
+          prevImage();
+          e.preventDefault();
+        } else if (e.key === 'ArrowRight') {
+          nextImage();
+          e.preventDefault();
+        } else if (e.key === 'Escape') {
+          closeFullscreen();
+          e.preventDefault();
+        }
+      }
+    });
+    
+    // Tombol kembali ke menu utama
+    backToMenuBtn.addEventListener('click', backToMainMenu);
+    
+    // Menambahkan event listener ke kartu menu (delegation)
+    document.querySelectorAll('.menu-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        const category = card.getAttribute('data-category');
+        if (category) {
+          loadCategory(category);
+        }
+      });
+    });
+    
+    // Opsional: jika ingin navigasi cepat dari fullscreen ke menu, tombol back sudah ada.
+    // Fallback jika logo tidak ada, tetap keren.
+    
+    // Preload interaksi: untuk pengguna HP portrait, pastikan grid rapi
+    // Resize handler untuk fix height gallery-scroll opsional
+    function adjustGalleryHeight() {
+      const galleryScrollDiv = document.getElementById('imageGrid');
+      if (galleryScrollDiv && galleryView.classList.contains('hidden') === false) {
+        const vh = window.innerHeight;
+        galleryScrollDiv.style.maxHeight = `${vh - 200}px`;
+      }
+    }
+    window.addEventListener('resize', adjustGalleryHeight);
+    // sedikit sentuhan akhir: ketika gallery muncul, set maxheight
+    const observer = new MutationObserver(() => {
+      if (!galleryView.classList.contains('hidden')) {
+        adjustGalleryHeight();
+      }
+    });
+    observer.observe(galleryView, { attributes: true });
+    
+    // inisialisasi awal: siap
+    console.log('Babeh Barbershop Catalog Ready — menggunakan supabase & dummy fallback');
+  </script>
+</body>
+</html>

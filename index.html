@@ -80,10 +80,6 @@
         transform: translateY(0);
       }
     }
-    
-    .image-name-overlay {
-      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-    }
   </style>
 </head>
 <body class="antialiased">
@@ -230,19 +226,25 @@
 
   <script>
     (function() {
+      // Konfigurasi Supabase
       const SUPABASE_URL = 'https://intzwjmlypmopzauxeqt.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImludHp3am1seXBtb3B6YXV4ZXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MTc5MTIsImV4cCI6MjA3MDI5MzkxMn0.VwwVEDdHtYP5gui4epTcNfLXhPkmfFbRVb5y8mrXJiM';
       const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       
       const BUCKET_NAME = 'model_rambut';
+      const TABLE_NAME = 'Model_Rambut';
+      
+      // Mapping kategori ke folder path di bucket
       const categoryMapping = {
         'Best Haircut': 'Best Haircut',
         'Kids Haircut': 'Kids Haircut',
         'All Collection': 'All Collections'
       };
       
-      let currentImages = []; // Array of {url, nama, nomor, informasi}
+      // State
+      let currentImages = []; // Array of {url, nomor, nama, informasi}
       let currentFullscreenIndex = 0;
+      let currentCategory = '';
       
       // DOM Elements
       const menuContainer = document.getElementById('menuContainer');
@@ -275,114 +277,122 @@
         }
       }
       
-      // Ambil data dari tabel Model_Rambut berdasarkan URL gambar
-      async function fetchModelInfoByUrl(imageUrl) {
+      // Ambil data dari tabel Model_Rambut berdasarkan path
+      async function fetchModelInfoFromDatabase(imagePath) {
         try {
-          // Extract path dari URL
-          const urlParts = imageUrl.split('/');
-          const fileName = urlParts[urlParts.length - 1];
-          const folderPath = urlParts.slice(-3, -1).join('/');
-          
           const { data, error } = await supabaseClient
-            .from('Model_Rambut')
-            .select('*')
-            .eq('Link_Url_Bucket', `${folderPath}/${fileName}`);
+            .from(TABLE_NAME)
+            .select('Nomor, Nama_Model_Rambut, Informasi')
+            .eq('Link_Url_Bucket', imagePath)
+            .maybeSingle(); // menggunakan maybeSingle agar tidak error jika tidak ditemukan
           
-          if (error || !data || data.length === 0) {
-            return { nomor: '-', nama: 'Model Rambut', informasi: 'Informasi belum tersedia' };
+          if (error) {
+            console.error('Error fetching from database:', error.message);
+            return null;
           }
           
-          return {
-            nomor: data[0].Nomor,
-            nama: data[0].Nama_Model_Rambut,
-            informasi: data[0].Informasi
-          };
+          return data;
         } catch (err) {
-          console.error('Error fetching model info:', err);
-          return { nomor: '-', nama: 'Model Rambut', informasi: 'Informasi belum tersedia' };
+          console.error('Database error:', err);
+          return null;
         }
       }
       
-      async function fetchImagesFromFolder(folderPath) {
+      // Ambil semua data dari tabel berdasarkan kategori (opsional, untuk fallback)
+      async function fetchAllModelsByCategory(kategori) {
+        try {
+          const { data, error } = await supabaseClient
+            .from(TABLE_NAME)
+            .select('*')
+            .eq('Kategori', kategori);
+          
+          if (error) {
+            console.error('Error fetching models by category:', error);
+            return [];
+          }
+          
+          return data || [];
+        } catch (err) {
+          console.error('Error:', err);
+          return [];
+        }
+      }
+      
+      // Fungsi utama: mengambil gambar dari Storage dan informasinya dari Database
+      async function fetchImagesFromFolder(folderPath, kategoriDisplay) {
         try {
           showLoading(true);
-          const { data, error } = await supabaseClient.storage
+          
+          // Langkah 1: Ambil daftar file dari Storage
+          const { data: files, error: storageError } = await supabaseClient.storage
             .from(BUCKET_NAME)
             .list(folderPath, { limit: 100, offset: 0, sortBy: { column: 'name', order: 'asc' } });
           
-          if (error || !data || data.length === 0) {
-            return getDummyImagesWithInfo(folderPath);
+          if (storageError || !files || files.length === 0) {
+            console.warn('Storage kosong atau error, mencoba ambil dari database saja');
+            // Fallback: ambil data dari database berdasarkan kategori
+            const models = await fetchAllModelsByCategory(kategoriDisplay);
+            if (models.length > 0) {
+              return models.map(model => ({
+                url: supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(model.Link_Url_Bucket).data.publicUrl,
+                nomor: model.Nomor,
+                nama: model.Nama_Model_Rambut,
+                informasi: model.Informasi
+              }));
+            }
+            return [];
           }
           
-          const imageFiles = data.filter(file => {
+          // Filter hanya file gambar
+          const imageFiles = files.filter(file => {
             const name = file.name;
             return !name.endsWith('/') && /\.(jpg|jpeg|png|webp|gif|JPG|JPEG|PNG|WEBP)$/i.test(name);
           });
           
-          // Build array dengan info dari database
+          if (imageFiles.length === 0) {
+            return [];
+          }
+          
+          // Langkah 2: Untuk setiap file, ambil informasinya dari database
           const imagesWithInfo = [];
+          
           for (const file of imageFiles) {
-            const publicUrl = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(`${folderPath}/${file.name}`).data.publicUrl;
+            const imagePath = `${folderPath}/${file.name}`;
+            const publicUrl = supabaseClient.storage
+              .from(BUCKET_NAME)
+              .getPublicUrl(imagePath).data.publicUrl;
             
-            // Ambil info dari tabel Model_Rambut
-            const { data: modelData } = await supabaseClient
-              .from('Model_Rambut')
-              .select('Nomor, Nama_Model_Rambut, Informasi')
-              .eq('Link_Url_Bucket', `${folderPath}/${file.name}`)
-              .single();
+            // Ambil info dari database
+            const modelInfo = await fetchModelInfoFromDatabase(imagePath);
             
             imagesWithInfo.push({
               url: publicUrl,
-              nomor: modelData?.Nomor || '-',
-              nama: modelData?.Nama_Model_Rambut || file.name.replace(/\.[^/.]+$/, ''),
-              informasi: modelData?.Informasi || 'Informasi belum tersedia'
+              nomor: modelInfo?.Nomor || '???',
+              nama: modelInfo?.Nama_Model_Rambut || file.name.replace(/\.[^/.]+$/, ''),
+              informasi: modelInfo?.Informasi || 'Informasi belum tersedia di database'
             });
           }
           
-          return imagesWithInfo.length > 0 ? imagesWithInfo : getDummyImagesWithInfo(folderPath);
+          return imagesWithInfo;
         } catch (err) {
           console.error('fetch error:', err);
-          return getDummyImagesWithInfo(folderPath);
+          return [];
         } finally {
           showLoading(false);
         }
       }
       
-      function getDummyImagesWithInfo(folderPath) {
-        let categoryKey = '';
-        if (folderPath.includes('Best Haircut')) categoryKey = 'best';
-        else if (folderPath.includes('Kids Haircut')) categoryKey = 'kids';
-        else if (folderPath.includes('All Collections')) categoryKey = 'all';
-        
-        const dummySets = {
-          best: [
-            { url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&h=500&fit=crop', nomor: 'D1', nama: 'Classic Pompadour', informasi: 'Gaya rambut klasik dengan volume di bagian atas yang disisir ke belakang. Cocok untuk acara formal dan kasual.' },
-            { url: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=500&h=500&fit=crop', nomor: 'D2', nama: 'Modern Undercut', informasi: 'Rambut bagian samping dicukur pendek dengan bagian atas yang lebih panjang. Tampilan modern dan edgy.' },
-            { url: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=500&h=500&fit=crop', nomor: 'D3', nama: 'Textured Crop', informasi: 'Potongan pendek dengan tekstur berlapis di bagian atas. Mudah diatur dan terlihat segar.' },
-            { url: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=500&h=500&fit=crop', nomor: 'D4', nama: 'Quiff Haircut', informasi: 'Gaya rambut dengan volume tinggi di depan. Memberikan kesan tegas dan percaya diri.' },
-            { url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=500&h=500&fit=crop', nomor: 'D5', nama: 'Side Part', informasi: 'Belahan samping yang rapi. Tampilan klasik dan profesional.' }
-          ],
-          kids: [
-            { url: 'https://images.unsplash.com/photo-1522771939531-1f9c5f5f6e2b?w=500&h=500&fit=crop', nomor: 'A1', nama: 'Kids Fade', informasi: 'Potongan fade yang lembut untuk anak-anak, aman dan nyaman.' },
-            { url: 'https://images.unsplash.com/photo-1545554980-7b57f5b6dd22?w=500&h=500&fit=crop', nomor: 'A2', nama: 'Little Man Bun', informasi: 'Gaya rambut ikatan kecil di bagian atas untuk tampilan yang menggemaskan.' },
-            { url: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500&h=500&fit=crop', nomor: 'A3', nama: 'Baby Mohawk', informasi: 'Gaya rambut mohawk versi anak-anak yang lucu dan trendy.' }
-          ],
-          all: [
-            { url: 'https://images.unsplash.com/photo-1560066984-138dadb4c235?w=500&h=500&fit=crop', nomor: 'C1', nama: 'Slick Back', informasi: 'Rambut disisir ke belakang dengan rapi. Tampilan profesional dan elegan.' },
-            { url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&h=500&fit=crop', nomor: 'C2', nama: 'French Crop', informasi: 'Potongan pendek dengan poni lurus horizontal. Sangat populer.' },
-            { url: 'https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?w=500&h=500&fit=crop', nomor: 'C3', nama: 'Buzz Cut', informasi: 'Potongan sangat pendek dan seragam. Praktis dan maskulin.' }
-          ]
-        };
-        
-        if (categoryKey === 'best') return dummySets.best;
-        if (categoryKey === 'kids') return dummySets.kids;
-        return dummySets.all;
-      }
-      
+      // Render kolase gambar
       function renderGallery(images) {
         if (!imageGrid) return;
-        if (!images.length) {
-          imageGrid.innerHTML = `<div class="col-span-full text-center py-12 bg-white/50 rounded-2xl"><i class="fas fa-image text-4xl text-gray-400 mb-2"></i><p class="text-gray-500">Belum ada foto di koleksi ini.</p></div>`;
+        
+        if (!images || images.length === 0) {
+          imageGrid.innerHTML = `
+            <div class="col-span-full text-center py-12 bg-white/50 rounded-2xl">
+              <i class="fas fa-image text-4xl text-gray-400 mb-2"></i>
+              <p class="text-gray-500">Belum ada foto di koleksi ini.</p>
+              <p class="text-gray-400 text-sm mt-2">Pastikan bucket storage dan tabel database sudah diisi dengan data yang sesuai.</p>
+            </div>`;
           return;
         }
         
@@ -396,6 +406,7 @@
           </div>
         `).join('');
         
+        // Event listener untuk setiap item gallery
         document.querySelectorAll('#imageGrid > div').forEach(container => {
           container.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -407,12 +418,18 @@
         });
       }
       
+      // Load kategori
       async function loadCategory(categoryDisplay) {
         const folderRaw = categoryMapping[categoryDisplay];
-        if (!folderRaw) return;
+        if (!folderRaw) {
+          console.error('Kategori tidak dikenali', categoryDisplay);
+          return;
+        }
         
-        galleryCategoryTitle.innerText = `${categoryDisplay} ✂️`;
-        const images = await fetchImagesFromFolder(folderRaw);
+        currentCategory = categoryDisplay;
+        galleryCategoryTitle.innerText = `${currentCategory} ✂️`;
+        
+        const images = await fetchImagesFromFolder(folderRaw, currentCategory);
         currentImages = images;
         renderGallery(currentImages);
         
@@ -421,13 +438,16 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
       
+      // Kembali ke menu utama
       function backToMainMenu() {
         galleryView.classList.add('hidden');
         menuContainer.classList.remove('hidden');
         currentImages = [];
+        currentCategory = '';
         closeFullscreen();
       }
       
+      // Fullscreen functions
       function openFullscreen(index) {
         if (!currentImages.length) return;
         if (index < 0) index = 0;
@@ -492,23 +512,33 @@
       closeInfoModal.addEventListener('click', closeInfoModalFunc);
       closeInfoModalBtn.addEventListener('click', closeInfoModalFunc);
       
-      // Touch swipe
+      // Touch swipe untuk mobile
       let touchStartX = 0;
       fullscreenModal.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
       });
       fullscreenModal.addEventListener('touchend', (e) => {
         const touchEndX = e.changedTouches[0].screenX;
-        if (touchEndX < touchStartX - 50) nextImage();
-        else if (touchEndX > touchStartX + 50) prevImage();
+        if (touchEndX < touchStartX - 50) {
+          nextImage();
+        } else if (touchEndX > touchStartX + 50) {
+          prevImage();
+        }
       });
       
       // Keyboard navigation
       document.addEventListener('keydown', (e) => {
         if (!fullscreenModal.classList.contains('hidden')) {
-          if (e.key === 'ArrowLeft') { prevImage(); e.preventDefault(); }
-          else if (e.key === 'ArrowRight') { nextImage(); e.preventDefault(); }
-          else if (e.key === 'Escape') { closeFullscreen(); e.preventDefault(); }
+          if (e.key === 'ArrowLeft') { 
+            prevImage(); 
+            e.preventDefault(); 
+          } else if (e.key === 'ArrowRight') { 
+            nextImage(); 
+            e.preventDefault(); 
+          } else if (e.key === 'Escape') { 
+            closeFullscreen(); 
+            e.preventDefault(); 
+          }
         }
       });
       
@@ -520,7 +550,28 @@
         });
       });
       
-      console.log('Aplikasi siap digunakan - Nama model tampil di kolase dan fullscreen');
+      // Adjust gallery height
+      function adjustGalleryHeight() {
+        const galleryScrollDiv = document.getElementById('imageGrid');
+        if (galleryScrollDiv && galleryView.classList.contains('hidden') === false) {
+          const vh = window.innerHeight;
+          galleryScrollDiv.style.maxHeight = `${vh - 200}px`;
+        }
+      }
+      
+      window.addEventListener('resize', adjustGalleryHeight);
+      
+      const observer = new MutationObserver(() => {
+        if (!galleryView.classList.contains('hidden')) {
+          adjustGalleryHeight();
+        }
+      });
+      observer.observe(galleryView, { attributes: true });
+      
+      console.log('🚀 Aplikasi Babeh Barbershop siap digunakan!');
+      console.log('📁 Data akan diambil dari:');
+      console.log('   - Storage bucket: ' + BUCKET_NAME);
+      console.log('   - Database tabel: ' + TABLE_NAME);
     })();
   </script>
 </body>

@@ -12,64 +12,51 @@
       background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
       font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
     }
-    
     .gallery-item {
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       cursor: pointer;
     }
-    
     .gallery-item:active {
       transform: scale(0.98);
     }
-    
     .fullscreen-overlay {
       background-color: rgba(0, 0, 0, 0.95);
       backdrop-filter: blur(12px);
     }
-    
     .gallery-scroll {
       scrollbar-width: thin;
       scrollbar-color: #cbd5e1 #f1f5f9;
     }
-    
     .gallery-scroll::-webkit-scrollbar {
       width: 4px;
       height: 4px;
     }
-    
     .gallery-scroll::-webkit-scrollbar-track {
       background: #f1f5f9;
       border-radius: 10px;
     }
-    
     .gallery-scroll::-webkit-scrollbar-thumb {
       background: #cbd5e1;
       border-radius: 10px;
     }
-    
     body.no-scroll {
       overflow: hidden;
     }
-    
     .nav-btn {
       background: rgba(30, 41, 59, 0.85);
       backdrop-filter: blur(8px);
       transition: all 0.2s;
     }
-    
     .nav-btn:active {
       transform: scale(0.94);
       background: rgba(15, 23, 42, 0.95);
     }
-    
     .title-shadow {
       text-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-    
     .info-modal {
       animation: slideUp 0.3s ease-out;
     }
-    
     @keyframes slideUp {
       from {
         opacity: 0;
@@ -98,9 +85,7 @@
       </div>
     </header>
 
-    <!-- Main Content -->
     <main class="flex-1 p-4 pb-20">
-      <!-- Menu Utama -->
       <div id="menuContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mt-6">
         <div class="menu-card bg-white rounded-2xl shadow-xl overflow-hidden cursor-pointer transform transition hover:scale-[1.02] active:scale-95" data-category="Best Haircut">
           <div class="h-48 bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
@@ -131,7 +116,6 @@
         </div>
       </div>
 
-      <!-- Gallery View -->
       <div id="galleryView" class="hidden">
         <div class="mb-5 flex items-center justify-between">
           <button id="backToMenuBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full shadow-md border border-gray-200 text-slate-700 font-medium active:scale-95 transition">
@@ -145,7 +129,6 @@
 
     <!-- Fullscreen Modal -->
     <div id="fullscreenModal" class="fixed inset-0 z-50 hidden fullscreen-overlay">
-      <!-- Tombol atas -->
       <div class="absolute top-5 left-5 z-50 flex gap-3">
         <button id="closeFullscreenBtn" class="bg-black/50 text-white p-3 rounded-full backdrop-blur-sm hover:bg-black/70 active:scale-95 transition flex items-center gap-2">
           <i class="fas fa-arrow-left text-xl"></i>
@@ -162,16 +145,9 @@
         </button>
       </div>
       
-      <!-- Gambar Fullscreen dengan Nama Model -->
       <div class="w-full h-full flex flex-col items-center justify-center relative">
         <img id="fullscreenImg" class="max-w-[90%] max-h-[75vh] object-contain rounded-xl shadow-2xl" src="" alt="Fullscreen">
-        
-        <!-- Nama Model di Fullscreen -->
-        <div id="fullscreenName" class="mt-4 text-white text-xl md:text-2xl font-bold bg-black/50 px-6 py-2 rounded-full backdrop-blur-sm">
-          -
-        </div>
-        
-        <!-- Tombol navigasi -->
+        <div id="fullscreenName" class="mt-4 text-white text-xl md:text-2xl font-bold bg-black/50 px-6 py-2 rounded-full backdrop-blur-sm">-</div>
         <button id="prevImageBtn" class="absolute left-3 md:left-6 nav-btn text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg">
           <i class="fas fa-chevron-left text-2xl"></i>
         </button>
@@ -179,8 +155,6 @@
           <i class="fas fa-chevron-right text-2xl"></i>
         </button>
       </div>
-      
-      <!-- Indikator -->
       <div class="absolute bottom-5 left-0 right-0 text-center text-white/80 text-sm">
         <span id="imageCounter">0 / 0</span> &nbsp;|&nbsp; Geser atau tekan tombol
       </div>
@@ -209,7 +183,7 @@
           </div>
           <div>
             <p class="text-sm text-gray-500">Informasi</p>
-            <p id="infoDeskripsi" class="text-slate-600 leading-relaxed">-</p>
+            <p id="infoDeskripsi" class="text-slate-600 leading-relaxed whitespace-pre-line">-</p>
           </div>
         </div>
         <button id="closeInfoModalBtn" class="mt-5 w-full bg-amber-600 text-white py-2 rounded-xl font-semibold hover:bg-amber-700 transition">
@@ -218,7 +192,6 @@
       </div>
     </div>
 
-    <!-- Loading Indicator -->
     <div id="loadingToast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-5 py-2 rounded-full shadow-lg z-40 text-sm font-medium hidden transition-all">
       <i class="fas fa-spinner fa-spin mr-2"></i> Memuat koleksi...
     </div>
@@ -226,7 +199,6 @@
 
   <script>
     (function() {
-      // Konfigurasi Supabase
       const SUPABASE_URL = 'https://intzwjmlypmopzauxeqt.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImludHp3am1seXBtb3B6YXV4ZXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MTc5MTIsImV4cCI6MjA3MDI5MzkxMn0.VwwVEDdHtYP5gui4epTcNfLXhPkmfFbRVb5y8mrXJiM';
       const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -234,15 +206,13 @@
       const BUCKET_NAME = 'model_rambut';
       const TABLE_NAME = 'model_rambut';
       
-      // Mapping kategori ke folder path di bucket
       const categoryMapping = {
         'Best Haircut': 'Best Haircut',
         'Kids Haircut': 'Kids Haircut',
         'All Collection': 'All Collections'
       };
       
-      // State
-      let currentImages = []; // Array of {url, nomor, nama, informasi}
+      let currentImages = [];
       let currentFullscreenIndex = 0;
       let currentCategory = '';
       
@@ -270,129 +240,102 @@
       const infoDeskripsi = document.getElementById('infoDeskripsi');
       
       function showLoading(show) {
-        if (show) {
-          loadingToast.classList.remove('hidden');
-        } else {
-          loadingToast.classList.add('hidden');
-        }
+        if (show) loadingToast.classList.remove('hidden');
+        else loadingToast.classList.add('hidden');
       }
       
-      // Ambil data dari tabel model_rambut berdasarkan path
-      async function fetchModelInfoFromDatabase(imagePath) {
+      // Fungsi untuk mengekstrak path dari URL lengkap
+      function extractPathFromUrl(url) {
         try {
-          const { data, error } = await supabaseClient
-            .from(TABLE_NAME)
-            .select('nomor, nama_model_rambut, informasi')
-            .eq('link_url_bucket', imagePath)
-            .maybeSingle(); // menggunakan maybeSingle agar tidak error jika tidak ditemukan
-          
-          if (error) {
-            console.error('Error fetching from database:', error.message);
-            return null;
+          // URL pattern: https://.../storage/v1/object/public/model_rambut/Best%20Haircut/Mullet.jpg
+          const match = url.match(/\/object\/public\/model_rambut\/(.+)$/);
+          if (match) {
+            return decodeURIComponent(match[1]);
           }
-          
-          return data;
-        } catch (err) {
-          console.error('Database error:', err);
+          return null;
+        } catch (e) {
           return null;
         }
       }
       
-      // Ambil semua data dari tabel berdasarkan kategori (opsional, untuk fallback)
-      async function fetchAllModelsByCategory(kategori) {
+      // Ambil semua data dari tabel model_rambut berdasarkan kategori
+      async function fetchModelsByCategory(kategori) {
         try {
+          console.log(`Mengambil data untuk kategori: ${kategori}`);
+          
           const { data, error } = await supabaseClient
             .from(TABLE_NAME)
             .select('*')
-            .eq('Kategori', kategori);
+            .eq('kategori', kategori);
           
           if (error) {
-            console.error('Error fetching models by category:', error);
+            console.error('Error fetching from database:', error);
             return [];
           }
           
+          console.log(`Ditemukan ${data?.length || 0} data di database untuk kategori ${kategori}`);
           return data || [];
         } catch (err) {
-          console.error('Error:', err);
+          console.error('Database error:', err);
           return [];
         }
       }
       
-      // Fungsi utama: mengambil gambar dari Storage dan informasinya dari Database
-      async function fetchImagesFromFolder(folderPath, kategoriDisplay) {
+      // Fungsi utama: mengambil data dari database dan menggabungkan dengan URL gambar
+      async function fetchImagesFromDatabase(kategoriDisplay) {
         try {
           showLoading(true);
+          console.log(`Memuat kategori: ${kategoriDisplay}`);
           
-          // Langkah 1: Ambil daftar file dari Storage
-          const { data: files, error: storageError } = await supabaseClient.storage
-            .from(BUCKET_NAME)
-            .list(folderPath, { limit: 100, offset: 0, sortBy: { column: 'name', order: 'asc' } });
+          // Ambil semua data dari database berdasarkan kategori
+          const models = await fetchModelsByCategory(kategoriDisplay);
           
-          if (storageError || !files || files.length === 0) {
-            console.warn('Storage kosong atau error, mencoba ambil dari database saja');
-            // Fallback: ambil data dari database berdasarkan kategori
-            const models = await fetchAllModelsByCategory(kategoriDisplay);
-            if (models.length > 0) {
-              return models.map(model => ({
-                url: supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(model.Link_Url_Bucket).data.publicUrl,
-                nomor: model.nomor,
-                nama: model.nama_model_rambut,
-                informasi: model.informasi
-              }));
-            }
+          if (!models || models.length === 0) {
+            console.warn(`Tidak ada data untuk kategori ${kategoriDisplay}`);
             return [];
           }
           
-          // Filter hanya file gambar
-          const imageFiles = files.filter(file => {
-            const name = file.name;
-            return !name.endsWith('/') && /\.(jpg|jpeg|png|webp|gif|JPG|JPEG|PNG|WEBP)$/i.test(name);
+          // Konversi ke format yang dibutuhkan
+          const imagesWithInfo = models.map(model => {
+            // URL sudah lengkap dari database
+            let imageUrl = model.link_url_bucket;
+            
+            // Jika URL tidak lengkap, buat dari bucket
+            if (!imageUrl.startsWith('http')) {
+              imageUrl = supabaseClient.storage
+                .from(BUCKET_NAME)
+                .getPublicUrl(imageUrl).data.publicUrl;
+            }
+            
+            return {
+              url: imageUrl,
+              nomor: model.nomor || '???',
+              nama: model.nama_model_rambut || 'Model Rambut',
+              informasi: model.informasi || 'Informasi belum tersedia'
+            };
           });
           
-          if (imageFiles.length === 0) {
-            return [];
-          }
-          
-          // Langkah 2: Untuk setiap file, ambil informasinya dari database
-          const imagesWithInfo = [];
-          
-          for (const file of imageFiles) {
-            const imagePath = `${folderPath}/${file.name}`;
-            const publicUrl = supabaseClient.storage
-              .from(BUCKET_NAME)
-              .getPublicUrl(imagePath).data.publicUrl;
-            
-            // Ambil info dari database
-            const modelInfo = await fetchModelInfoFromDatabase(imagePath);
-            
-            imagesWithInfo.push({
-              url: publicUrl,
-              nomor: modelInfo?.nomor || '???',
-              nama: modelInfo?.nama_model_rambut || file.name.replace(/\.[^/.]+$/, ''),
-              informasi: modelInfo?.informasi || 'Informasi belum tersedia di database'
-            });
-          }
+          console.log(`Berhasil memuat ${imagesWithInfo.length} gambar dengan data dari database`);
+          console.log('Contoh data:', imagesWithInfo[0]);
           
           return imagesWithInfo;
         } catch (err) {
-          console.error('fetch error:', err);
+          console.error('Error:', err);
           return [];
         } finally {
           showLoading(false);
         }
       }
       
-      // Render kolase gambar
       function renderGallery(images) {
         if (!imageGrid) return;
         
         if (!images || images.length === 0) {
-          imageGrid.innerHTML = `
-            <div class="col-span-full text-center py-12 bg-white/50 rounded-2xl">
-              <i class="fas fa-image text-4xl text-gray-400 mb-2"></i>
-              <p class="text-gray-500">Belum ada foto di koleksi ini.</p>
-              <p class="text-gray-400 text-sm mt-2">Pastikan bucket storage dan tabel database sudah diisi dengan data yang sesuai.</p>
-            </div>`;
+          imageGrid.innerHTML = `<div class="col-span-full text-center py-12 bg-white/50 rounded-2xl">
+            <i class="fas fa-image text-4xl text-gray-400 mb-2"></i>
+            <p class="text-gray-500">Belum ada foto di koleksi ini.</p>
+            <p class="text-gray-400 text-sm mt-2">Pastikan tabel model_rambut sudah diisi dengan data yang sesuai.</p>
+          </div>`;
           return;
         }
         
@@ -400,36 +343,33 @@
           <div class="gallery-item relative overflow-hidden rounded-xl shadow-md bg-white aspect-square group cursor-pointer" data-img-index="${idx}">
             <img src="${item.url}" alt="${item.nama}" class="w-full h-full object-cover rounded-xl" loading="lazy">
             <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-              <p class="text-white text-sm font-semibold truncate">${item.nomor} - ${item.nama}</p>
+              <p class="text-white text-sm font-semibold truncate">${escapeHtml(item.nomor)} - ${escapeHtml(item.nama)}</p>
             </div>
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition"></div>
           </div>
         `).join('');
         
-        // Event listener untuk setiap item gallery
         document.querySelectorAll('#imageGrid > div').forEach(container => {
           container.addEventListener('click', (e) => {
             e.stopPropagation();
             const index = parseInt(container.getAttribute('data-img-index'));
-            if (!isNaN(index)) {
-              openFullscreen(index);
-            }
+            if (!isNaN(index)) openFullscreen(index);
           });
         });
       }
       
-      // Load kategori
+      function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+      
       async function loadCategory(categoryDisplay) {
-        const folderRaw = categoryMapping[categoryDisplay];
-        if (!folderRaw) {
-          console.error('Kategori tidak dikenali', categoryDisplay);
-          return;
-        }
-        
         currentCategory = categoryDisplay;
         galleryCategoryTitle.innerText = `${currentCategory} ✂️`;
         
-        const images = await fetchImagesFromFolder(folderRaw, currentCategory);
+        const images = await fetchImagesFromDatabase(currentCategory);
         currentImages = images;
         renderGallery(currentImages);
         
@@ -438,20 +378,15 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
       
-      // Kembali ke menu utama
       function backToMainMenu() {
         galleryView.classList.add('hidden');
         menuContainer.classList.remove('hidden');
         currentImages = [];
-        currentCategory = '';
         closeFullscreen();
       }
       
-      // Fullscreen functions
       function openFullscreen(index) {
         if (!currentImages.length) return;
-        if (index < 0) index = 0;
-        if (index >= currentImages.length) index = currentImages.length - 1;
         currentFullscreenIndex = index;
         const item = currentImages[currentFullscreenIndex];
         fullscreenImg.src = item.url;
@@ -466,7 +401,7 @@
       }
       
       function nextImage() {
-        if (currentImages.length === 0) return;
+        if (!currentImages.length) return;
         currentFullscreenIndex = (currentFullscreenIndex + 1) % currentImages.length;
         const item = currentImages[currentFullscreenIndex];
         fullscreenImg.src = item.url;
@@ -475,7 +410,7 @@
       }
       
       function prevImage() {
-        if (currentImages.length === 0) return;
+        if (!currentImages.length) return;
         currentFullscreenIndex = (currentFullscreenIndex - 1 + currentImages.length) % currentImages.length;
         const item = currentImages[currentFullscreenIndex];
         fullscreenImg.src = item.url;
@@ -512,33 +447,23 @@
       closeInfoModal.addEventListener('click', closeInfoModalFunc);
       closeInfoModalBtn.addEventListener('click', closeInfoModalFunc);
       
-      // Touch swipe untuk mobile
+      // Touch swipe
       let touchStartX = 0;
       fullscreenModal.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
       });
       fullscreenModal.addEventListener('touchend', (e) => {
         const touchEndX = e.changedTouches[0].screenX;
-        if (touchEndX < touchStartX - 50) {
-          nextImage();
-        } else if (touchEndX > touchStartX + 50) {
-          prevImage();
-        }
+        if (touchEndX < touchStartX - 50) nextImage();
+        else if (touchEndX > touchStartX + 50) prevImage();
       });
       
       // Keyboard navigation
       document.addEventListener('keydown', (e) => {
         if (!fullscreenModal.classList.contains('hidden')) {
-          if (e.key === 'ArrowLeft') { 
-            prevImage(); 
-            e.preventDefault(); 
-          } else if (e.key === 'ArrowRight') { 
-            nextImage(); 
-            e.preventDefault(); 
-          } else if (e.key === 'Escape') { 
-            closeFullscreen(); 
-            e.preventDefault(); 
-          }
+          if (e.key === 'ArrowLeft') { prevImage(); e.preventDefault(); }
+          else if (e.key === 'ArrowRight') { nextImage(); e.preventDefault(); }
+          else if (e.key === 'Escape') { closeFullscreen(); e.preventDefault(); }
         }
       });
       
@@ -569,9 +494,7 @@
       observer.observe(galleryView, { attributes: true });
       
       console.log('🚀 Aplikasi Babeh Barbershop siap digunakan!');
-      console.log('📁 Data akan diambil dari:');
-      console.log('   - Storage bucket: ' + BUCKET_NAME);
-      console.log('   - Database tabel: ' + TABLE_NAME);
+      console.log('📁 Menggunakan tabel: ' + TABLE_NAME);
     })();
   </script>
 </body>

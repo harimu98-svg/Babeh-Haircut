@@ -75,6 +75,9 @@
     .info-link:active {
       transform: scale(0.96);
     }
+    img {
+      background-color: #1e293b;
+    }
   </style>
 </head>
 <body class="antialiased">
@@ -137,7 +140,6 @@
 
     <!-- Fullscreen Modal -->
     <div id="fullscreenModal" class="fixed inset-0 z-50 hidden fullscreen-overlay">
-      <!-- Tombol atas - hanya tombol back dan close -->
       <div class="absolute top-5 left-5 z-50">
         <button id="closeFullscreenBtn" class="bg-black/50 text-white p-3 rounded-full backdrop-blur-sm hover:bg-black/70 active:scale-95 transition flex items-center gap-2">
           <i class="fas fa-arrow-left text-xl"></i>
@@ -151,15 +153,12 @@
       </div>
       
       <div class="w-full h-full flex flex-col items-center justify-center relative">
-        <!-- Gambar Fullscreen -->
-        <img id="fullscreenImg" class="max-w-[90%] max-h-[65vh] object-contain rounded-xl shadow-2xl" src="" alt="Fullscreen">
+        <img id="fullscreenImg" class="max-w-[90%] max-h-[65vh] object-contain rounded-xl shadow-2xl" src="" alt="Fullscreen" style="background-color: #0f172a;">
         
-        <!-- Informasi Model (Nomor, Nama, dan Link Informasi) - Rata Tengah -->
         <div class="mt-6 text-center">
           <div id="fullscreenName" class="text-white text-xl md:text-2xl font-bold bg-black/50 px-6 py-2 rounded-full backdrop-blur-sm inline-block">
             -
           </div>
-          <!-- Link Informasi di bawah, rata tengah, tampil sebagai teks "Informasi" -->
           <div class="mt-3">
             <button id="infoButtonFullscreen" class="info-link bg-amber-600/80 text-white px-6 py-2 rounded-full backdrop-blur-sm hover:bg-amber-700 active:scale-95 transition font-medium text-base">
               <i class="fas fa-info-circle mr-2"></i> Informasi
@@ -167,7 +166,6 @@
           </div>
         </div>
         
-        <!-- Tombol navigasi kiri/kanan -->
         <button id="prevImageBtn" class="absolute left-3 md:left-6 nav-btn text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg">
           <i class="fas fa-chevron-left text-2xl"></i>
         </button>
@@ -176,7 +174,6 @@
         </button>
       </div>
       
-      <!-- Indikator -->
       <div class="absolute bottom-5 left-0 right-0 text-center text-white/80 text-sm">
         <span id="imageCounter">0 / 0</span> &nbsp;|&nbsp; Geser atau tekan tombol
       </div>
@@ -225,7 +222,6 @@
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImludHp3am1seXBtb3B6YXV4ZXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MTc5MTIsImV4cCI6MjA3MDI5MzkxMn0.VwwVEDdHtYP5gui4epTcNfLXhPkmfFbRVb5y8mrXJiM';
       const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       
-      const BUCKET_NAME = 'model_rambut';
       const TABLE_NAME = 'model_rambut';
       
       const categoryMapping = {
@@ -281,7 +277,13 @@
             return [];
           }
           
-          console.log(`Ditemukan ${data?.length || 0} data di database untuk kategori ${kategori}`);
+          console.log(`Ditemukan ${data?.length || 0} data di database`);
+          
+          // Log URL gambar untuk debugging
+          if (data && data.length > 0) {
+            console.log('Contoh URL gambar:', data[0].link_url_bucket);
+          }
+          
           return data || [];
         } catch (err) {
           console.error('Database error:', err);
@@ -303,13 +305,18 @@
           }
           
           const imagesWithInfo = models.map(model => {
+            // Langsung gunakan URL dari database (sudah lengkap)
             let imageUrl = model.link_url_bucket;
             
+            // Jika URL tidak dimulai dengan http, maka buat URL dari bucket
             if (!imageUrl.startsWith('http')) {
               imageUrl = supabaseClient.storage
-                .from(BUCKET_NAME)
+                .from('model_rambut')
                 .getPublicUrl(imageUrl).data.publicUrl;
             }
+            
+            console.log(`Memuat gambar: ${model.nomor} - ${model.nama_model_rambut}`);
+            console.log(`URL: ${imageUrl}`);
             
             return {
               url: imageUrl,
@@ -343,7 +350,7 @@
         
         imageGrid.innerHTML = images.map((item, idx) => `
           <div class="gallery-item relative overflow-hidden rounded-xl shadow-md bg-white aspect-square group cursor-pointer" data-img-index="${idx}">
-            <img src="${item.url}" alt="${item.nama}" class="w-full h-full object-cover rounded-xl" loading="lazy">
+            <img src="${item.url}" alt="${item.nama}" class="w-full h-full object-cover rounded-xl" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/400x400/1e293b/ffffff?text=No+Image';">
             <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
               <p class="text-white text-sm font-semibold truncate">${escapeHtml(item.nomor)} - ${escapeHtml(item.nama)}</p>
             </div>

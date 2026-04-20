@@ -232,7 +232,7 @@
       const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       
       const BUCKET_NAME = 'model_rambut';
-      const TABLE_NAME = 'Model_Rambut';
+      const TABLE_NAME = 'model_rambut';
       
       // Mapping kategori ke folder path di bucket
       const categoryMapping = {
@@ -277,13 +277,13 @@
         }
       }
       
-      // Ambil data dari tabel Model_Rambut berdasarkan path
+      // Ambil data dari tabel model_rambut berdasarkan path
       async function fetchModelInfoFromDatabase(imagePath) {
         try {
           const { data, error } = await supabaseClient
             .from(TABLE_NAME)
-            .select('Nomor, Nama_Model_Rambut, Informasi')
-            .eq('Link_Url_Bucket', imagePath)
+            .select('nomor, nama_model_rambut, informasi')
+            .eq('link_url_bucket', imagePath)
             .maybeSingle(); // menggunakan maybeSingle agar tidak error jika tidak ditemukan
           
           if (error) {
@@ -335,9 +335,9 @@
             if (models.length > 0) {
               return models.map(model => ({
                 url: supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(model.Link_Url_Bucket).data.publicUrl,
-                nomor: model.Nomor,
-                nama: model.Nama_Model_Rambut,
-                informasi: model.Informasi
+                nomor: model.nomor,
+                nama: model.nama_model_rambut,
+                informasi: model.informasi
               }));
             }
             return [];
@@ -367,9 +367,9 @@
             
             imagesWithInfo.push({
               url: publicUrl,
-              nomor: modelInfo?.Nomor || '???',
-              nama: modelInfo?.Nama_Model_Rambut || file.name.replace(/\.[^/.]+$/, ''),
-              informasi: modelInfo?.Informasi || 'Informasi belum tersedia di database'
+              nomor: modelInfo?.nomor || '???',
+              nama: modelInfo?.nama_model_rambut || file.name.replace(/\.[^/.]+$/, ''),
+              informasi: modelInfo?.informasi || 'Informasi belum tersedia di database'
             });
           }
           

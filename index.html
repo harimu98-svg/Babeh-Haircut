@@ -67,6 +67,14 @@
         transform: translateY(0);
       }
     }
+    .info-link {
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+    .info-link:active {
+      transform: scale(0.96);
+    }
   </style>
 </head>
 <body class="antialiased">
@@ -129,14 +137,11 @@
 
     <!-- Fullscreen Modal -->
     <div id="fullscreenModal" class="fixed inset-0 z-50 hidden fullscreen-overlay">
-      <div class="absolute top-5 left-5 z-50 flex gap-3">
+      <!-- Tombol atas - hanya tombol back dan close -->
+      <div class="absolute top-5 left-5 z-50">
         <button id="closeFullscreenBtn" class="bg-black/50 text-white p-3 rounded-full backdrop-blur-sm hover:bg-black/70 active:scale-95 transition flex items-center gap-2">
           <i class="fas fa-arrow-left text-xl"></i>
           <span class="hidden sm:inline">Back</span>
-        </button>
-        <button id="infoButton" class="bg-amber-600/80 text-white p-3 rounded-full backdrop-blur-sm hover:bg-amber-700 active:scale-95 transition flex items-center gap-2">
-          <i class="fas fa-info-circle text-xl"></i>
-          <span class="hidden sm:inline">Informasi</span>
         </button>
       </div>
       <div class="absolute top-5 right-5 z-50">
@@ -146,8 +151,23 @@
       </div>
       
       <div class="w-full h-full flex flex-col items-center justify-center relative">
-        <img id="fullscreenImg" class="max-w-[90%] max-h-[75vh] object-contain rounded-xl shadow-2xl" src="" alt="Fullscreen">
-        <div id="fullscreenName" class="mt-4 text-white text-xl md:text-2xl font-bold bg-black/50 px-6 py-2 rounded-full backdrop-blur-sm">-</div>
+        <!-- Gambar Fullscreen -->
+        <img id="fullscreenImg" class="max-w-[90%] max-h-[65vh] object-contain rounded-xl shadow-2xl" src="" alt="Fullscreen">
+        
+        <!-- Informasi Model (Nomor, Nama, dan Link Informasi) - Rata Tengah -->
+        <div class="mt-6 text-center">
+          <div id="fullscreenName" class="text-white text-xl md:text-2xl font-bold bg-black/50 px-6 py-2 rounded-full backdrop-blur-sm inline-block">
+            -
+          </div>
+          <!-- Link Informasi di bawah, rata tengah, tampil sebagai teks "Informasi" -->
+          <div class="mt-3">
+            <button id="infoButtonFullscreen" class="info-link bg-amber-600/80 text-white px-6 py-2 rounded-full backdrop-blur-sm hover:bg-amber-700 active:scale-95 transition font-medium text-base">
+              <i class="fas fa-info-circle mr-2"></i> Informasi
+            </button>
+          </div>
+        </div>
+        
+        <!-- Tombol navigasi kiri/kanan -->
         <button id="prevImageBtn" class="absolute left-3 md:left-6 nav-btn text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg">
           <i class="fas fa-chevron-left text-2xl"></i>
         </button>
@@ -155,6 +175,8 @@
           <i class="fas fa-chevron-right text-2xl"></i>
         </button>
       </div>
+      
+      <!-- Indikator -->
       <div class="absolute bottom-5 left-0 right-0 text-center text-white/80 text-sm">
         <span id="imageCounter">0 / 0</span> &nbsp;|&nbsp; Geser atau tekan tombol
       </div>
@@ -231,7 +253,7 @@
       const nextImageBtn = document.getElementById('nextImageBtn');
       const imageCounter = document.getElementById('imageCounter');
       const loadingToast = document.getElementById('loadingToast');
-      const infoButton = document.getElementById('infoButton');
+      const infoButtonFullscreen = document.getElementById('infoButtonFullscreen');
       const infoModal = document.getElementById('infoModal');
       const closeInfoModal = document.getElementById('closeInfoModal');
       const closeInfoModalBtn = document.getElementById('closeInfoModalBtn');
@@ -242,20 +264,6 @@
       function showLoading(show) {
         if (show) loadingToast.classList.remove('hidden');
         else loadingToast.classList.add('hidden');
-      }
-      
-      // Fungsi untuk mengekstrak path dari URL lengkap
-      function extractPathFromUrl(url) {
-        try {
-          // URL pattern: https://.../storage/v1/object/public/model_rambut/Best%20Haircut/Mullet.jpg
-          const match = url.match(/\/object\/public\/model_rambut\/(.+)$/);
-          if (match) {
-            return decodeURIComponent(match[1]);
-          }
-          return null;
-        } catch (e) {
-          return null;
-        }
       }
       
       // Ambil semua data dari tabel model_rambut berdasarkan kategori
@@ -281,13 +289,12 @@
         }
       }
       
-      // Fungsi utama: mengambil data dari database dan menggabungkan dengan URL gambar
+      // Fungsi utama: mengambil data dari database
       async function fetchImagesFromDatabase(kategoriDisplay) {
         try {
           showLoading(true);
           console.log(`Memuat kategori: ${kategoriDisplay}`);
           
-          // Ambil semua data dari database berdasarkan kategori
           const models = await fetchModelsByCategory(kategoriDisplay);
           
           if (!models || models.length === 0) {
@@ -295,12 +302,9 @@
             return [];
           }
           
-          // Konversi ke format yang dibutuhkan
           const imagesWithInfo = models.map(model => {
-            // URL sudah lengkap dari database
             let imageUrl = model.link_url_bucket;
             
-            // Jika URL tidak lengkap, buat dari bucket
             if (!imageUrl.startsWith('http')) {
               imageUrl = supabaseClient.storage
                 .from(BUCKET_NAME)
@@ -315,9 +319,7 @@
             };
           });
           
-          console.log(`Berhasil memuat ${imagesWithInfo.length} gambar dengan data dari database`);
-          console.log('Contoh data:', imagesWithInfo[0]);
-          
+          console.log(`Berhasil memuat ${imagesWithInfo.length} gambar`);
           return imagesWithInfo;
         } catch (err) {
           console.error('Error:', err);
@@ -443,7 +445,7 @@
       prevImageBtn.addEventListener('click', prevImage);
       nextImageBtn.addEventListener('click', nextImage);
       backToMenuBtn.addEventListener('click', backToMainMenu);
-      infoButton.addEventListener('click', showInfo);
+      infoButtonFullscreen.addEventListener('click', showInfo);
       closeInfoModal.addEventListener('click', closeInfoModalFunc);
       closeInfoModalBtn.addEventListener('click', closeInfoModalFunc);
       
@@ -494,7 +496,6 @@
       observer.observe(galleryView, { attributes: true });
       
       console.log('🚀 Aplikasi Babeh Barbershop siap digunakan!');
-      console.log('📁 Menggunakan tabel: ' + TABLE_NAME);
     })();
   </script>
 </body>

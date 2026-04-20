@@ -13,13 +13,13 @@
       font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
     }
     
-    .gallery-img {
+    .gallery-item {
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       cursor: pointer;
     }
     
-    .gallery-img:active {
-      transform: scale(0.97);
+    .gallery-item:active {
+      transform: scale(0.98);
     }
     
     .fullscreen-overlay {
@@ -64,6 +64,25 @@
     
     .title-shadow {
       text-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .info-modal {
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .image-name-overlay {
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
     }
   </style>
 </head>
@@ -131,10 +150,14 @@
     <!-- Fullscreen Modal -->
     <div id="fullscreenModal" class="fixed inset-0 z-50 hidden fullscreen-overlay">
       <!-- Tombol atas -->
-      <div class="absolute top-5 left-5 z-50">
+      <div class="absolute top-5 left-5 z-50 flex gap-3">
         <button id="closeFullscreenBtn" class="bg-black/50 text-white p-3 rounded-full backdrop-blur-sm hover:bg-black/70 active:scale-95 transition flex items-center gap-2">
           <i class="fas fa-arrow-left text-xl"></i>
           <span class="hidden sm:inline">Back</span>
+        </button>
+        <button id="infoButton" class="bg-amber-600/80 text-white p-3 rounded-full backdrop-blur-sm hover:bg-amber-700 active:scale-95 transition flex items-center gap-2">
+          <i class="fas fa-info-circle text-xl"></i>
+          <span class="hidden sm:inline">Informasi</span>
         </button>
       </div>
       <div class="absolute top-5 right-5 z-50">
@@ -143,9 +166,14 @@
         </button>
       </div>
       
-      <!-- Gambar Fullscreen -->
-      <div class="w-full h-full flex items-center justify-center relative">
-        <img id="fullscreenImg" class="max-w-[90%] max-h-[85vh] object-contain rounded-xl shadow-2xl" src="" alt="Fullscreen">
+      <!-- Gambar Fullscreen dengan Nama Model -->
+      <div class="w-full h-full flex flex-col items-center justify-center relative">
+        <img id="fullscreenImg" class="max-w-[90%] max-h-[75vh] object-contain rounded-xl shadow-2xl" src="" alt="Fullscreen">
+        
+        <!-- Nama Model di Fullscreen -->
+        <div id="fullscreenName" class="mt-4 text-white text-xl md:text-2xl font-bold bg-black/50 px-6 py-2 rounded-full backdrop-blur-sm">
+          -
+        </div>
         
         <!-- Tombol navigasi -->
         <button id="prevImageBtn" class="absolute left-3 md:left-6 nav-btn text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg">
@@ -159,6 +187,38 @@
       <!-- Indikator -->
       <div class="absolute bottom-5 left-0 right-0 text-center text-white/80 text-sm">
         <span id="imageCounter">0 / 0</span> &nbsp;|&nbsp; Geser atau tekan tombol
+      </div>
+    </div>
+
+    <!-- Modal Informasi -->
+    <div id="infoModal" class="fixed inset-0 z-60 hidden bg-black/70 flex items-center justify-center p-4" style="z-index: 60;">
+      <div class="bg-white rounded-2xl max-w-md w-full p-6 info-modal">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold text-slate-800">
+            <i class="fas fa-info-circle text-amber-600 mr-2"></i>
+            Detail Model Rambut
+          </h3>
+          <button id="closeInfoModal" class="text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        <div id="infoContent" class="space-y-3">
+          <div>
+            <p class="text-sm text-gray-500">Nomor Model</p>
+            <p id="infoNomor" class="font-semibold text-slate-700">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">Nama Model</p>
+            <p id="infoNama" class="font-semibold text-slate-700 text-lg">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">Informasi</p>
+            <p id="infoDeskripsi" class="text-slate-600 leading-relaxed">-</p>
+          </div>
+        </div>
+        <button id="closeInfoModalBtn" class="mt-5 w-full bg-amber-600 text-white py-2 rounded-xl font-semibold hover:bg-amber-700 transition">
+          Tutup
+        </button>
       </div>
     </div>
 
@@ -181,7 +241,7 @@
         'All Collection': 'All Collections'
       };
       
-      let currentImages = [];
+      let currentImages = []; // Array of {url, nama, nomor, informasi}
       let currentFullscreenIndex = 0;
       
       // DOM Elements
@@ -192,18 +252,54 @@
       const galleryCategoryTitle = document.getElementById('galleryCategoryTitle');
       const fullscreenModal = document.getElementById('fullscreenModal');
       const fullscreenImg = document.getElementById('fullscreenImg');
+      const fullscreenName = document.getElementById('fullscreenName');
       const closeFullscreenBtn = document.getElementById('closeFullscreenBtn');
       const closeFullscreenXBtn = document.getElementById('closeFullscreenXBtn');
       const prevImageBtn = document.getElementById('prevImageBtn');
       const nextImageBtn = document.getElementById('nextImageBtn');
       const imageCounter = document.getElementById('imageCounter');
       const loadingToast = document.getElementById('loadingToast');
+      const infoButton = document.getElementById('infoButton');
+      const infoModal = document.getElementById('infoModal');
+      const closeInfoModal = document.getElementById('closeInfoModal');
+      const closeInfoModalBtn = document.getElementById('closeInfoModalBtn');
+      const infoNomor = document.getElementById('infoNomor');
+      const infoNama = document.getElementById('infoNama');
+      const infoDeskripsi = document.getElementById('infoDeskripsi');
       
       function showLoading(show) {
         if (show) {
           loadingToast.classList.remove('hidden');
         } else {
           loadingToast.classList.add('hidden');
+        }
+      }
+      
+      // Ambil data dari tabel Model_Rambut berdasarkan URL gambar
+      async function fetchModelInfoByUrl(imageUrl) {
+        try {
+          // Extract path dari URL
+          const urlParts = imageUrl.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          const folderPath = urlParts.slice(-3, -1).join('/');
+          
+          const { data, error } = await supabaseClient
+            .from('Model_Rambut')
+            .select('*')
+            .eq('Link_Url_Bucket', `${folderPath}/${fileName}`);
+          
+          if (error || !data || data.length === 0) {
+            return { nomor: '-', nama: 'Model Rambut', informasi: 'Informasi belum tersedia' };
+          }
+          
+          return {
+            nomor: data[0].Nomor,
+            nama: data[0].Nama_Model_Rambut,
+            informasi: data[0].Informasi
+          };
+        } catch (err) {
+          console.error('Error fetching model info:', err);
+          return { nomor: '-', nama: 'Model Rambut', informasi: 'Informasi belum tersedia' };
         }
       }
       
@@ -215,7 +311,7 @@
             .list(folderPath, { limit: 100, offset: 0, sortBy: { column: 'name', order: 'asc' } });
           
           if (error || !data || data.length === 0) {
-            return getDummyImagesByCategory(folderPath);
+            return getDummyImagesWithInfo(folderPath);
           }
           
           const imageFiles = data.filter(file => {
@@ -223,21 +319,36 @@
             return !name.endsWith('/') && /\.(jpg|jpeg|png|webp|gif|JPG|JPEG|PNG|WEBP)$/i.test(name);
           });
           
-          const imageUrls = imageFiles.map(file => {
-            const { data: publicUrlData } = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(`${folderPath}/${file.name}`);
-            return publicUrlData.publicUrl;
-          });
+          // Build array dengan info dari database
+          const imagesWithInfo = [];
+          for (const file of imageFiles) {
+            const publicUrl = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(`${folderPath}/${file.name}`).data.publicUrl;
+            
+            // Ambil info dari tabel Model_Rambut
+            const { data: modelData } = await supabaseClient
+              .from('Model_Rambut')
+              .select('Nomor, Nama_Model_Rambut, Informasi')
+              .eq('Link_Url_Bucket', `${folderPath}/${file.name}`)
+              .single();
+            
+            imagesWithInfo.push({
+              url: publicUrl,
+              nomor: modelData?.Nomor || '-',
+              nama: modelData?.Nama_Model_Rambut || file.name.replace(/\.[^/.]+$/, ''),
+              informasi: modelData?.Informasi || 'Informasi belum tersedia'
+            });
+          }
           
-          return imageUrls.length > 0 ? imageUrls : getDummyImagesByCategory(folderPath);
+          return imagesWithInfo.length > 0 ? imagesWithInfo : getDummyImagesWithInfo(folderPath);
         } catch (err) {
           console.error('fetch error:', err);
-          return getDummyImagesByCategory(folderPath);
+          return getDummyImagesWithInfo(folderPath);
         } finally {
           showLoading(false);
         }
       }
       
-      function getDummyImagesByCategory(folderPath) {
+      function getDummyImagesWithInfo(folderPath) {
         let categoryKey = '';
         if (folderPath.includes('Best Haircut')) categoryKey = 'best';
         else if (folderPath.includes('Kids Haircut')) categoryKey = 'kids';
@@ -245,29 +356,21 @@
         
         const dummySets = {
           best: [
-            'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?w=500&h=500&fit=crop'
+            { url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&h=500&fit=crop', nomor: 'D1', nama: 'Classic Pompadour', informasi: 'Gaya rambut klasik dengan volume di bagian atas yang disisir ke belakang. Cocok untuk acara formal dan kasual.' },
+            { url: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=500&h=500&fit=crop', nomor: 'D2', nama: 'Modern Undercut', informasi: 'Rambut bagian samping dicukur pendek dengan bagian atas yang lebih panjang. Tampilan modern dan edgy.' },
+            { url: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=500&h=500&fit=crop', nomor: 'D3', nama: 'Textured Crop', informasi: 'Potongan pendek dengan tekstur berlapis di bagian atas. Mudah diatur dan terlihat segar.' },
+            { url: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=500&h=500&fit=crop', nomor: 'D4', nama: 'Quiff Haircut', informasi: 'Gaya rambut dengan volume tinggi di depan. Memberikan kesan tegas dan percaya diri.' },
+            { url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=500&h=500&fit=crop', nomor: 'D5', nama: 'Side Part', informasi: 'Belahan samping yang rapi. Tampilan klasik dan profesional.' }
           ],
           kids: [
-            'https://images.unsplash.com/photo-1522771939531-1f9c5f5f6e2b?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1545554980-7b57f5b6dd22?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=500&h=500&fit=crop'
+            { url: 'https://images.unsplash.com/photo-1522771939531-1f9c5f5f6e2b?w=500&h=500&fit=crop', nomor: 'A1', nama: 'Kids Fade', informasi: 'Potongan fade yang lembut untuk anak-anak, aman dan nyaman.' },
+            { url: 'https://images.unsplash.com/photo-1545554980-7b57f5b6dd22?w=500&h=500&fit=crop', nomor: 'A2', nama: 'Little Man Bun', informasi: 'Gaya rambut ikatan kecil di bagian atas untuk tampilan yang menggemaskan.' },
+            { url: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500&h=500&fit=crop', nomor: 'A3', nama: 'Baby Mohawk', informasi: 'Gaya rambut mohawk versi anak-anak yang lucu dan trendy.' }
           ],
           all: [
-            'https://images.unsplash.com/photo-1560066984-138dadb4c235?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1522771939531-1f9c5f5f6e2b?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1545554980-7b57f5b6dd22?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=500&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=500&h=500&fit=crop'
+            { url: 'https://images.unsplash.com/photo-1560066984-138dadb4c235?w=500&h=500&fit=crop', nomor: 'C1', nama: 'Slick Back', informasi: 'Rambut disisir ke belakang dengan rapi. Tampilan profesional dan elegan.' },
+            { url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&h=500&fit=crop', nomor: 'C2', nama: 'French Crop', informasi: 'Potongan pendek dengan poni lurus horizontal. Sangat populer.' },
+            { url: 'https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?w=500&h=500&fit=crop', nomor: 'C3', nama: 'Buzz Cut', informasi: 'Potongan sangat pendek dan seragam. Praktis dan maskulin.' }
           ]
         };
         
@@ -283,14 +386,16 @@
           return;
         }
         
-        imageGrid.innerHTML = images.map((imgUrl, idx) => `
-          <div class="relative overflow-hidden rounded-xl shadow-md bg-white aspect-square group cursor-pointer" data-img-index="${idx}">
-            <img src="${imgUrl}" alt="Model rambut" class="gallery-img w-full h-full object-cover rounded-xl" loading="lazy">
-            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></div>
+        imageGrid.innerHTML = images.map((item, idx) => `
+          <div class="gallery-item relative overflow-hidden rounded-xl shadow-md bg-white aspect-square group cursor-pointer" data-img-index="${idx}">
+            <img src="${item.url}" alt="${item.nama}" class="w-full h-full object-cover rounded-xl" loading="lazy">
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+              <p class="text-white text-sm font-semibold truncate">${item.nomor} - ${item.nama}</p>
+            </div>
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition"></div>
           </div>
         `).join('');
         
-        // Event listener untuk setiap container gambar
         document.querySelectorAll('#imageGrid > div').forEach(container => {
           container.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -328,7 +433,9 @@
         if (index < 0) index = 0;
         if (index >= currentImages.length) index = currentImages.length - 1;
         currentFullscreenIndex = index;
-        fullscreenImg.src = currentImages[currentFullscreenIndex];
+        const item = currentImages[currentFullscreenIndex];
+        fullscreenImg.src = item.url;
+        fullscreenName.innerText = `${item.nomor} - ${item.nama}`;
         updateCounterText();
         fullscreenModal.classList.remove('hidden');
         document.body.classList.add('no-scroll');
@@ -341,14 +448,18 @@
       function nextImage() {
         if (currentImages.length === 0) return;
         currentFullscreenIndex = (currentFullscreenIndex + 1) % currentImages.length;
-        fullscreenImg.src = currentImages[currentFullscreenIndex];
+        const item = currentImages[currentFullscreenIndex];
+        fullscreenImg.src = item.url;
+        fullscreenName.innerText = `${item.nomor} - ${item.nama}`;
         updateCounterText();
       }
       
       function prevImage() {
         if (currentImages.length === 0) return;
         currentFullscreenIndex = (currentFullscreenIndex - 1 + currentImages.length) % currentImages.length;
-        fullscreenImg.src = currentImages[currentFullscreenIndex];
+        const item = currentImages[currentFullscreenIndex];
+        fullscreenImg.src = item.url;
+        fullscreenName.innerText = `${item.nomor} - ${item.nama}`;
         updateCounterText();
       }
       
@@ -357,14 +468,31 @@
         document.body.classList.remove('no-scroll');
       }
       
+      function showInfo() {
+        if (currentImages.length > 0 && currentFullscreenIndex >= 0) {
+          const item = currentImages[currentFullscreenIndex];
+          infoNomor.innerText = item.nomor;
+          infoNama.innerText = item.nama;
+          infoDeskripsi.innerText = item.informasi;
+          infoModal.classList.remove('hidden');
+        }
+      }
+      
+      function closeInfoModalFunc() {
+        infoModal.classList.add('hidden');
+      }
+      
       // Event Listeners
       closeFullscreenBtn.addEventListener('click', closeFullscreen);
       closeFullscreenXBtn.addEventListener('click', closeFullscreen);
       prevImageBtn.addEventListener('click', prevImage);
       nextImageBtn.addEventListener('click', nextImage);
       backToMenuBtn.addEventListener('click', backToMainMenu);
+      infoButton.addEventListener('click', showInfo);
+      closeInfoModal.addEventListener('click', closeInfoModalFunc);
+      closeInfoModalBtn.addEventListener('click', closeInfoModalFunc);
       
-      // Touch swipe untuk fullscreen
+      // Touch swipe
       let touchStartX = 0;
       fullscreenModal.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
@@ -392,7 +520,7 @@
         });
       });
       
-      console.log('Aplikasi siap digunakan - Klik gambar untuk fullscreen');
+      console.log('Aplikasi siap digunakan - Nama model tampil di kolase dan fullscreen');
     })();
   </script>
 </body>

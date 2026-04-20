@@ -262,6 +262,34 @@
         else loadingToast.classList.add('hidden');
       }
       
+      // Fungsi untuk mengurutkan berdasarkan nomor (D1, D2, D3... atau A1, A2...)
+      function sortByNomor(data) {
+        return data.sort((a, b) => {
+          const nomorA = a.nomor || '';
+          const nomorB = b.nomor || '';
+          
+          // Extract huruf dan angka (contoh: D1 -> huruf=D, angka=1)
+          const matchA = nomorA.match(/^([A-Za-z]+)(\d+)$/);
+          const matchB = nomorB.match(/^([A-Za-z]+)(\d+)$/);
+          
+          if (matchA && matchB) {
+            // Urutkan berdasarkan huruf dulu, lalu angka
+            const hurufA = matchA[1];
+            const hurufB = matchB[1];
+            const angkaA = parseInt(matchA[2], 10);
+            const angkaB = parseInt(matchB[2], 10);
+            
+            if (hurufA === hurufB) {
+              return angkaA - angkaB;
+            }
+            return hurufA.localeCompare(hurufB);
+          }
+          
+          // Fallback: urutkan sebagai string biasa
+          return nomorA.localeCompare(nomorB);
+        });
+      }
+      
       // Ambil semua data dari tabel model_rambut berdasarkan kategori
       async function fetchModelsByCategory(kategori) {
         try {
@@ -277,14 +305,17 @@
             return [];
           }
           
-          console.log(`Ditemukan ${data?.length || 0} data di database`);
-          
-          // Log URL gambar untuk debugging
           if (data && data.length > 0) {
-            console.log('Contoh URL gambar:', data[0].link_url_bucket);
+            // Urutkan data berdasarkan nomor sebelum diproses
+            const sortedData = sortByNomor(data);
+            console.log(`Ditemukan ${sortedData.length} data di database (sudah diurutkan berdasarkan nomor)`);
+            sortedData.forEach((item, idx) => {
+              console.log(`${idx + 1}. ${item.nomor} - ${item.nama_model_rambut}`);
+            });
+            return sortedData;
           }
           
-          return data || [];
+          return [];
         } catch (err) {
           console.error('Database error:', err);
           return [];
@@ -305,18 +336,13 @@
           }
           
           const imagesWithInfo = models.map(model => {
-            // Langsung gunakan URL dari database (sudah lengkap)
             let imageUrl = model.link_url_bucket;
             
-            // Jika URL tidak dimulai dengan http, maka buat URL dari bucket
             if (!imageUrl.startsWith('http')) {
               imageUrl = supabaseClient.storage
                 .from('model_rambut')
                 .getPublicUrl(imageUrl).data.publicUrl;
             }
-            
-            console.log(`Memuat gambar: ${model.nomor} - ${model.nama_model_rambut}`);
-            console.log(`URL: ${imageUrl}`);
             
             return {
               url: imageUrl,
@@ -326,7 +352,7 @@
             };
           });
           
-          console.log(`Berhasil memuat ${imagesWithInfo.length} gambar`);
+          console.log(`Berhasil memuat ${imagesWithInfo.length} gambar (sudah terurut berdasarkan nomor)`);
           return imagesWithInfo;
         } catch (err) {
           console.error('Error:', err);
@@ -503,6 +529,7 @@
       observer.observe(galleryView, { attributes: true });
       
       console.log('🚀 Aplikasi Babeh Barbershop siap digunakan!');
+      console.log('📊 Data akan diurutkan berdasarkan kolom "nomor" (D1, D2, D3... atau A1, A2...)');
     })();
   </script>
 </body>

@@ -87,22 +87,24 @@
 <body class="antialiased">
 
   <div id="app" class="max-w-full min-h-screen flex flex-col relative">
-    <!-- Header dengan ungu gradient gelap ke terang -->
-   <header class="shadow-md sticky top-0 z-20" style="background: linear-gradient(135deg, #4c1d95, #7e22ce, #a855f7);">
-  <div class="px-5 py-4 flex items-center gap-4">
-    <!-- Container Logo Lingkaran - Ukuran lebih besar -->
-    <div class="w-20 h-20 rounded-full shadow-md overflow-hidden bg-white flex items-center justify-center flex-shrink-0 p-2">
-      <img src="logo.png" alt="Babeh Logo" class="w-full h-full object-contain" 
-           onerror="this.onerror=null; this.parentElement.innerHTML = '<i class=\'fas fa-cut text-purple-600 text-4xl\'></i>';">
-    </div>
-    <div>
-      <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white title-shadow">Katalog Model Rambut<br><span class="text-sm font-medium text-purple-200">Babeh Barbershop</span></h1>
-    </div>
-  </div>
-</header>
+    <!-- Header dengan ungu gradient -->
+    <header class="shadow-md sticky top-0 z-20" style="background: linear-gradient(135deg, #4c1d95, #7e22ce, #a855f7);">
+      <div class="px-5 py-4 flex items-center gap-4">
+        <!-- Container Logo Lingkaran -->
+        <div class="w-[72px] h-[72px] rounded-full shadow-md overflow-hidden bg-white flex items-center justify-center flex-shrink-0 p-2">
+          <img src="Babeh-Haircut/logo.jpg" alt="Babeh Logo" class="w-full h-full object-contain" 
+               onerror="this.onerror=null; this.parentElement.innerHTML = '<i class=\'fas fa-cut text-purple-600 text-3xl\'></i>';">
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white title-shadow">Katalog Model Rambut<br><span class="text-sm font-medium text-purple-200">Babeh Barbershop</span></h1>
+        </div>
+      </div>
+    </header>
 
     <main class="flex-1 p-4 pb-20">
-      <div id="menuContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mt-6">
+      <!-- Menu Utama dengan 6 kategori -->
+      <div id="menuContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mt-6">
+        <!-- Best Haircut Card -->
         <div class="menu-card bg-white rounded-2xl shadow-xl overflow-hidden cursor-pointer transform transition hover:scale-[1.02] active:scale-95" data-category="Best Haircut">
           <div class="h-48 bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
             <i class="fas fa-cut text-white text-6xl opacity-80"></i>
@@ -112,6 +114,8 @@
             <p class="text-gray-500 mt-1">Koleksi model rambut favorit pelanggan</p>
           </div>
         </div>
+        
+        <!-- Kids Haircut Card -->
         <div class="menu-card bg-white rounded-2xl shadow-xl overflow-hidden cursor-pointer transform transition hover:scale-[1.02] active:scale-95" data-category="Kids Haircut">
           <div class="h-48 bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
             <i class="fas fa-child text-white text-6xl opacity-80"></i>
@@ -121,6 +125,8 @@
             <p class="text-gray-500 mt-1">Gaya rambut kekinian untuk si kecil</p>
           </div>
         </div>
+        
+        <!-- All Collection Card -->
         <div class="menu-card bg-white rounded-2xl shadow-xl overflow-hidden cursor-pointer transform transition hover:scale-[1.02] active:scale-95" data-category="All Collection">
           <div class="h-48 bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
             <i class="fas fa-layer-group text-white text-6xl opacity-80"></i>
@@ -128,6 +134,39 @@
           <div class="p-5">
             <h2 class="text-2xl font-bold text-slate-800">All Collection</h2>
             <p class="text-gray-500 mt-1">Semua model rambut eksklusif</p>
+          </div>
+        </div>
+        
+        <!-- Celebrity Haircut Card (BARU) -->
+        <div class="menu-card bg-white rounded-2xl shadow-xl overflow-hidden cursor-pointer transform transition hover:scale-[1.02] active:scale-95" data-category="Celebrity Haircut">
+          <div class="h-48 bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
+            <i class="fas fa-star text-white text-6xl opacity-80"></i>
+          </div>
+          <div class="p-5">
+            <h2 class="text-2xl font-bold text-slate-800">Celebrity Haircut</h2>
+            <p class="text-gray-500 mt-1">Model rambut ala selebriti ternama</p>
+          </div>
+        </div>
+        
+        <!-- Football Players Haircut Card (BARU) -->
+        <div class="menu-card bg-white rounded-2xl shadow-xl overflow-hidden cursor-pointer transform transition hover:scale-[1.02] active:scale-95" data-category="Football Players Haircut">
+          <div class="h-48 bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+            <i class="fas fa-futbol text-white text-6xl opacity-80"></i>
+          </div>
+          <div class="p-5">
+            <h2 class="text-2xl font-bold text-slate-800">Football Players Haircut</h2>
+            <p class="text-gray-500 mt-1">Inspirasi gaya rambut pemain bola</p>
+          </div>
+        </div>
+        
+        <!-- Other Service Card (BARU) -->
+        <div class="menu-card bg-white rounded-2xl shadow-xl overflow-hidden cursor-pointer transform transition hover:scale-[1.02] active:scale-95" data-category="Other Service">
+          <div class="h-48 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <i class="fas fa-concierge-bell text-white text-6xl opacity-80"></i>
+          </div>
+          <div class="p-5">
+            <h2 class="text-2xl font-bold text-slate-800">Other Service</h2>
+            <p class="text-gray-500 mt-1">Layanan perawatan rambut lainnya</p>
           </div>
         </div>
       </div>
@@ -229,10 +268,14 @@
       
       const TABLE_NAME = 'model_rambut';
       
+      // Mapping kategori - sudah termasuk 3 kategori baru
       const categoryMapping = {
         'Best Haircut': 'Best Haircut',
         'Kids Haircut': 'Kids Haircut',
-        'All Collection': 'All Collections'
+        'All Collection': 'All Collections',
+        'Celebrity Haircut': 'Celebrity Haircut',
+        'Football Players Haircut': 'Football Players Haircut',
+        'Other Service': 'Other Service'
       };
       
       let currentImages = [];
@@ -310,6 +353,8 @@
             console.log(`Ditemukan ${sortedData.length} data di database (sudah diurutkan)`);
             return sortedData;
           }
+          
+          console.log(`Tidak ada data untuk kategori ${kategori}`);
           return [];
         } catch (err) {
           console.error('Database error:', err);
@@ -346,7 +391,7 @@
             };
           });
           
-          console.log(`Berhasil memuat ${imagesWithInfo.length} gambar`);
+          console.log(`Berhasil memuat ${imagesWithInfo.length} gambar untuk kategori ${kategoriDisplay}`);
           return imagesWithInfo;
         } catch (err) {
           console.error('Error:', err);
@@ -363,7 +408,7 @@
           imageGrid.innerHTML = `<div class="col-span-full text-center py-12 bg-white/50 rounded-2xl">
             <i class="fas fa-image text-4xl text-gray-400 mb-2"></i>
             <p class="text-gray-500">Belum ada foto di koleksi ini.</p>
-            <p class="text-gray-400 text-sm mt-2">Pastikan tabel model_rambut sudah diisi dengan data yang sesuai.</p>
+            <p class="text-gray-400 text-sm mt-2">Silakan tambahkan data pada tabel model_rambut dengan kategori "${currentCategory}"</p>
           </div>`;
           return;
         }
@@ -523,6 +568,7 @@
       observer.observe(galleryView, { attributes: true });
       
       console.log('🚀 Aplikasi Babeh Barbershop siap digunakan!');
+      console.log('📋 Kategori tersedia: Best Haircut, Kids Haircut, All Collection, Celebrity Haircut, Football Players Haircut, Other Service');
     })();
   </script>
 </body>
